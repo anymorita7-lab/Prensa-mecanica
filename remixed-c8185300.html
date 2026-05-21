@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Prensa Mecánica — Simulador Completo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#faf7f2;
+  --green:#1a7a4a; --green-light:#2dbb72; --green-pale:#e6f4ec;
+  --cyan:#00bcd4; --cyan-pale:#e0f7fa;
+  --blue:#3b7dd8; --blue-bg:#e8f0fb;
+  --brown:#8b5e2e; --brown-bg:#f5ede0;
+  --red:#c0392b; --red-bg:#fdecea;
+  --purple:#6c3fc5; --purple-bg:#ede8f8;
+  --gnorm:#2d7a4a; --gnorm-bg:#e6f4ec;
+  --orange:#d4650a; --orange-bg:#fef0e4;
+  --wood-light:#d4a96a; --wood:#b8884a; --wood-dark:#8b5e2e;
+}
+html,body{min-height:100%;font-family:'DM Mono',monospace;background:var(--bg);}
+body{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 0 4rem;
+  background:
+    radial-gradient(ellipse at 15% 0%,#d4f5e3 0%,transparent 45%),
+    radial-gradient(ellipse at 85% 100%,#b2ebf2 0%,transparent 45%),
+    #faf7f2;
+}
+
+/* =================== FASE 1 =================== */
+#fase1{
+  width:100%;max-width:420px;
+  padding:2rem 1.2rem 2.5rem;
+  display:flex;flex-direction:column;align-items:center;
+  animation:fadeDown .55s ease both;
+}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-18px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+@keyframes popIn{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+
+.f1-header{text-align:center;margin-bottom:2rem;}
+.f1-icon{
+  width:68px;height:68px;
+  background:linear-gradient(135deg,#d4f5e3,#b2ebf2);
+  border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font-size:2rem;margin-bottom:.9rem;
+  box-shadow:0 4px 20px rgba(45,187,114,.2);
+  animation:pulse 3s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{box-shadow:0 4px 20px rgba(45,187,114,.2)}50%{box-shadow:0 4px 30px rgba(45,187,114,.45)}}
+.f1-header h1{
+  font-family:'Syne',sans-serif;font-size:1.75rem;font-weight:800;
+  color:#1a2e22;letter-spacing:-.03em;line-height:1.15;
+}
+.f1-header h1 span{color:var(--cyan);}
+.f1-header p{font-size:.72rem;color:#6b8f78;margin-top:.5rem;letter-spacing:.03em;}
+
+.f1-card{
+  width:100%;background:#fff;
+  border-radius:24px;padding:1.8rem 1.5rem;
+  box-shadow:0 4px 6px rgba(0,0,0,.04),0 20px 50px rgba(26,122,74,.1),0 0 0 1px rgba(45,187,114,.12);
+}
+.f1-section-title{
+  font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;
+  color:var(--green);margin-bottom:.3rem;
+}
+.f1-section-desc{font-size:.7rem;color:#6b8f78;margin-bottom:1.1rem;line-height:1.5;}
+
+.f1-input-wrap{position:relative;margin-bottom:1.3rem;}
+.f1-input-unit{
+  position:absolute;right:1rem;top:50%;transform:translateY(-50%);
+  font-size:.72rem;font-weight:700;color:#9ab;pointer-events:none;
+}
+.f1-input{
+  width:100%;padding:.9rem 3rem .9rem 1rem;
+  border:2px solid #d0eedd;border-radius:14px;
+  font-family:'DM Mono',monospace;font-size:1.1rem;color:#1a2e22;
+  background:#f8fffe;outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+  -moz-appearance:textfield;
+}
+.f1-input::-webkit-inner-spin-button,.f1-input::-webkit-outer-spin-button{-webkit-appearance:none}
+.f1-input:focus{border-color:var(--green-light);box-shadow:0 0 0 4px rgba(45,187,114,.12);background:#fff;}
+.f1-input::placeholder{color:#bcd8c8;}
+
+.f1-result{
+  background:linear-gradient(135deg,#f0faf4,#e0f7fa);
+  border:2px dashed #9edfc2;border-radius:18px;
+  padding:1.4rem;text-align:center;min-height:110px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.f1-result::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(45,187,114,.08),rgba(0,188,212,.08));
+  opacity:0;transition:opacity .3s;
+}
+.f1-result.has-value::before{opacity:1;}
+.f1-result-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:#6b8f78;margin-bottom:.4rem;}
+.f1-result-value{
+  font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;
+  color:var(--green);line-height:1;letter-spacing:-.04em;
+  animation:popIn .35s cubic-bezier(.34,1.56,.64,1);
+}
+.f1-result-value span{font-size:1.3rem;color:var(--cyan);margin-left:4px;}
+.f1-result-formula{margin-top:.6rem;font-size:.68rem;color:#6b8f78;}
+.f1-result-formula strong{color:var(--green);font-family:'Syne',sans-serif;}
+.f1-result-empty{font-size:.78rem;color:#9ab;line-height:1.6;}
+.f1-result-empty .ico{font-size:1.4rem;display:block;margin-bottom:.3rem;color:#9edfc2;}
+
+/* BRIDGE — flecha y CTA */
+.bridge{
+  width:100%;max-width:420px;
+  display:none;flex-direction:column;align-items:center;
+  padding:1.2rem 1.2rem 0;
+  animation:slideUp .5s ease both;
+}
+.bridge.visible{display:flex;}
+.bridge-line{
+  width:2px;height:32px;
+  background:linear-gradient(to bottom,var(--green-light),var(--cyan));
+  border-radius:2px;margin-bottom:.2rem;
+}
+.bridge-arrow-icon{
+  font-size:1.6rem;color:var(--cyan);margin-bottom:.5rem;
+  animation:bounce 1.4s ease-in-out infinite;
+}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+.bridge-text{
+  font-size:.75rem;color:#6b8f78;text-align:center;
+  margin-bottom:1rem;line-height:1.6;max-width:280px;
+}
+.bridge-text strong{color:var(--green);}
+.bridge-btn{
+  display:inline-flex;align-items:center;gap:.6rem;
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  color:#fff;border:none;
+  padding:.85rem 2rem;border-radius:999px;
+  font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700;
+  cursor:pointer;letter-spacing:.02em;
+  box-shadow:0 8px 24px rgba(26,122,74,.25);
+  transition:transform .15s,box-shadow .15s;
+}
+.bridge-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(26,122,74,.35);}
+.bridge-btn:active{transform:scale(.97);}
+.bridge-btn .arrow{font-size:1.1rem;transition:transform .2s;}
+.bridge-btn:hover .arrow{transform:translateX(4px);}
+
+/* =================== DIVIDER =================== */
+.section-divider{
+  width:100%;max-width:420px;
+  margin:.8rem 0 0;
+  display:none;
+}
+.section-divider.visible{display:block;}
+.divider-bar{
+  height:3px;
+  background:linear-gradient(90deg,transparent,var(--green-light),var(--cyan),transparent);
+  border-radius:2px;opacity:.5;
+}
+
+/* =================== FASE 2 =================== */
+#fase2{
+  width:100%;max-width:420px;
+  padding:1.5rem 1rem 1rem;
+  display:none;flex-direction:column;align-items:center;
+}
+#fase2.visible{display:flex;animation:slideUp .6s ease both;}
+
+.f2-header{text-align:center;margin-bottom:1.2rem;}
+.f2-header h2{
+  font-family:'Syne',sans-serif;font-size:1.35rem;font-weight:800;
+  color:#1a2e22;letter-spacing:-.02em;
+}
+.f2-header p{font-size:.68rem;color:#6b8f78;margin-top:.3rem;letter-spacing:.04em;}
+
+.f-badge{
+  display:inline-flex;align-items:center;gap:.5rem;
+  background:linear-gradient(135deg,var(--green),var(--cyan));
+  color:#fff;padding:.3rem .9rem;border-radius:999px;
+  font-size:.72rem;font-weight:700;margin-bottom:1rem;
+  letter-spacing:.03em;
+}
+
+/* hint */
+.hint{font-size:.63rem;color:#b09060;text-align:center;margin-bottom:.9rem;letter-spacing:.04em;}
+
+/* SVG PRESS */
+.press-svg-wrap{position:relative;width:280px;}
+
+/* LABELS */
+.labels-container{position:absolute;inset:0;pointer-events:none;}
+.label{
+  position:absolute;display:flex;align-items:center;gap:.4rem;
+  pointer-events:all;cursor:pointer;
+  opacity:0;animation:fadeIn .45s ease both;
+}
+.label-box{
+  padding:.32rem .65rem;border-radius:8px;border:1.5px solid currentColor;
+  font-size:.62rem;font-weight:500;line-height:1.3;text-align:center;
+  white-space:nowrap;transition:transform .15s,box-shadow .15s;
+  font-family:'DM Mono',monospace;
+}
+.label:hover .label-box,.label.active .label-box{transform:scale(1.06);box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.label.active .label-box{filter:brightness(.93);}
+.label-line{display:flex;align-items:center;}
+.label-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+
+.lbl-blue .label-box{color:var(--blue);background:var(--blue-bg);border-color:var(--blue);}
+.lbl-blue .label-dot{background:var(--blue);}
+.lbl-brown .label-box{color:var(--brown);background:var(--brown-bg);border-color:var(--brown);}
+.lbl-brown .label-dot{background:var(--brown);}
+.lbl-red .label-box{color:var(--red);background:var(--red-bg);border-color:var(--red);}
+.lbl-red .label-dot{background:var(--red);}
+.lbl-purple .label-box{color:var(--purple);background:var(--purple-bg);border-color:var(--purple);}
+.lbl-purple .label-dot{background:var(--purple);}
+.lbl-gnorm .label-box{color:var(--gnorm);background:var(--gnorm-bg);border-color:var(--gnorm);}
+.lbl-gnorm .label-dot{background:var(--gnorm);}
+.lbl-orange .label-box{color:var(--orange);background:var(--orange-bg);border-color:var(--orange);}
+.lbl-orange .label-dot{background:var(--orange);}
+
+/* PANEL */
+.panel-wrap{width:100%;max-width:420px;margin-top:1.2rem;}
+.panel{
+  border-radius:18px;padding:1.3rem 1.4rem;
+  border:1.5px solid transparent;display:none;
+  animation:popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+.panel.visible{display:block;}
+.panel-blue{background:var(--blue-bg);border-color:var(--blue);}
+.panel-brown{background:var(--brown-bg);border-color:var(--brown);}
+.panel-red{background:var(--red-bg);border-color:var(--red);}
+.panel-purple{background:var(--purple-bg);border-color:var(--purple);}
+.panel-gnorm{background:var(--gnorm-bg);border-color:var(--gnorm);}
+.panel-orange{background:var(--orange-bg);border-color:var(--orange);}
+.panel-title{font-family:'Syne',sans-serif;font-size:.95rem;font-weight:800;margin-bottom:.2rem;}
+.panel-sub{font-size:.62rem;opacity:.7;margin-bottom:.8rem;}
+.formula-chip{
+  display:inline-block;padding:.28rem .75rem;border-radius:999px;
+  font-size:.7rem;font-weight:500;color:#fff;margin-bottom:.9rem;letter-spacing:.03em;
+}
+.chip-blue{background:var(--blue);} .chip-brown{background:var(--brown);}
+.chip-red{background:var(--red);} .chip-purple{background:var(--purple);}
+.chip-gnorm{background:var(--gnorm);} .chip-orange{background:var(--orange);}
+.panel-desc{font-size:.68rem;line-height:1.6;color:#1a2e22;margin-bottom:.9rem;opacity:.8;}
+
+/* prefill notice */
+.prefill-note{
+  display:none;
+  font-size:.65rem;padding:.4rem .8rem;border-radius:8px;margin-bottom:.8rem;
+  background:rgba(45,187,114,.1);color:var(--green);border:1px solid rgba(45,187,114,.25);
+}
+.prefill-note.show{display:block;}
+
+.calc-row{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap;}
+.calc-field{flex:1;min-width:76px;}
+.calc-field label{display:block;font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.28rem;opacity:.7;}
+.calc-field input{
+  width:100%;padding:.55rem .65rem;border-radius:10px;
+  border:1.5px solid rgba(0,0,0,.15);background:#fff;
+  font-family:'DM Mono',monospace;font-size:.82rem;color:#1a2e22;
+  outline:none;-moz-appearance:textfield;transition:border-color .2s,box-shadow .2s;
+}
+.calc-field input::-webkit-inner-spin-button,.calc-field input::-webkit-outer-spin-button{-webkit-appearance:none}
+.input-blue input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,125,216,.1);}
+.input-brown input:focus{border-color:var(--brown);box-shadow:0 0 0 3px rgba(139,94,46,.1);}
+.input-red input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,.1);}
+.input-purple input:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(108,63,197,.1);}
+.input-gnorm input:focus{border-color:var(--gnorm);box-shadow:0 0 0 3px rgba(45,122,74,.1);}
+.input-orange input:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(212,101,10,.1);}
+
+.result-line{margin-top:.8rem;text-align:center;min-height:2.2rem;}
+.result-num{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;line-height:1;animation:popIn .3s ease;}
+.result-explain{font-size:.62rem;opacity:.65;margin-top:.2rem;}
+
+/* PRESS ANIMATION */
+.press-block{transition:transform .5s cubic-bezier(.4,0,.2,1);}
+.pressing .press-block{transform:translateY(18px);}
+.pressing .bottle-squish{transform:scaleY(.65) translateY(8px);transform-origin:bottom center;}
+.bottle-squish{transition:transform .5s cubic-bezier(.4,0,.2,1);}
+
+/* label delays */
+.label:nth-child(1){animation-delay:.15s}
+.label:nth-child(2){animation-delay:.25s}
+.label:nth-child(3){animation-delay:.35s}
+.label:nth-child(4){animation-delay:.45s}
+.label:nth-child(5){animation-delay:.55s}
+.label:nth-child(6){animation-delay:.65s}
+
+/* hooke */
+.hooke-badge{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:linear-gradient(135deg,#f97316,#d4650a);color:#fff;
+  padding:.22rem .7rem;border-radius:999px;font-size:.65rem;font-weight:700;margin-bottom:.6rem;
+}
+.hooke-vis{margin:.8rem 0;background:#fff;border-radius:14px;padding:.9rem;border:1px solid rgba(212,101,10,.2);}
+.hooke-vis-label{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--orange);margin-bottom:.45rem;display:flex;justify-content:space-between;}
+.spring-vis{display:flex;align-items:center;justify-content:center;margin:.35rem 0;gap:.3rem;}
+.spring-coil{font-size:1.3rem;transition:letter-spacing .4s ease;color:#d4650a;letter-spacing:.05em;}
+.bottle-vis-wrap{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:.4rem 0;}
+
+/* back button */
+.back-btn{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:none;border:1.5px solid #d0e8d8;
+  color:#6b8f78;padding:.5rem 1rem;border-radius:999px;
+  font-family:'DM Mono',monospace;font-size:.68rem;
+  cursor:pointer;margin-top:1.5rem;
+  transition:border-color .15s,color .15s;
+}
+.back-btn:hover{border-color:var(--green);color:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- ========== FASE 1: CALCULADORA SIMPLE ========== -->
+<div id="fase1">
+  <div class="f1-header">
+    <div class="f1-icon">♻️</div>
+    <h1>Prensa Mecánica<br><span>para Botellas</span></h1>
+    <p>SOLUCIÓN SOSTENIBLE · REDUCCIÓN DE RESIDUOS PLÁSTICOS 💚</p>
+  </div>
+
+  <div class="f1-card">
+    <div class="f1-section-title">¿Qué observaste?</div>
+    <p class="f1-section-desc">Registra la masa medida por el dinamómetro y descubre la fuerza aplicada.</p>
+
+    <label style="display:block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#1a2e22;margin-bottom:.45rem;">
+      Masa registrada
+    </label>
+    <div class="f1-input-wrap">
+      <input class="f1-input" type="number" id="masa-input" placeholder="Ej: 5" oninput="fase1Calc(this.value)"/>
+      <span class="f1-input-unit">kg</span>
+    </div>
+
+    <div class="f1-result" id="f1-result">
+      <p class="f1-result-empty">
+        <span class="ico">⚡</span>
+        Ingresa un valor para<br>calcular los newtons
+      </p>
+    </div>
+  </div>
+
+  <div style="margin-top:.6rem;text-align:center;font-size:.62rem;color:#9ab;">
+    Proyecto educativo de física e ingeniería 🌎
+  </div>
+</div>
+
+<!-- ========== PUENTE / BRIDGE ========== -->
+<div class="bridge" id="bridge">
+  <div class="bridge-line"></div>
+  <div class="bridge-arrow-icon">›</div>
+  <p class="bridge-text">
+    Con esta fuerza ya puedes explorar<br>
+    <strong>todas las fuerzas del sistema</strong> ↓
+  </p>
+  <button class="bridge-btn" onclick="mostrarFase2()">
+    Ver sistema completo <span class="arrow">》</span>
+  </button>
+</div>
+
+<!-- ========== DIVIDER ========== -->
+<div class="section-divider" id="secDivider">
+  <div class="divider-bar"></div>
+</div>
+
+<!-- ========== FASE 2: DIAGRAMA COMPLETO ========== -->
+<div id="fase2">
+  <div class="f2-header">
+    <h2>⚙️ Sistema de Fuerzas</h2>
+    <p>TOCA CADA ETIQUETA PARA VER SU FÓRMULA Y CALCULAR</p>
+  </div>
+  <div class="f-badge" id="f-badge-display">F aplicada: — N</div>
+
+  <div class="press-svg-wrap" id="pressSvg">
+    <svg viewBox="0 0 280 480" xmlns="http://www.w3.org/2000/svg" width="100%">
+      <defs>
+        <linearGradient id="woodGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#c4904a"/><stop offset="40%" stop-color="#d4a96a"/><stop offset="100%" stop-color="#b07838"/>
+        </linearGradient>
+        <linearGradient id="woodGradV" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4a96a"/><stop offset="100%" stop-color="#b07838"/>
+        </linearGradient>
+        <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8b5e2e"/><stop offset="100%" stop-color="#6b3e18"/>
+        </linearGradient>
+        <linearGradient id="steelGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8fa8ba"/><stop offset="50%" stop-color="#b8cdd8"/><stop offset="100%" stop-color="#8fa8ba"/>
+        </linearGradient>
+        <linearGradient id="blockGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4b060"/><stop offset="100%" stop-color="#b88c3a"/>
+        </linearGradient>
+        <linearGradient id="bottleGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c8e8f5" stop-opacity=".9"/><stop offset="100%" stop-color="#7ab8d0" stop-opacity=".85"/>
+        </linearGradient>
+        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#00000022"/>
+        </filter>
+      </defs>
+      <rect x="30" y="390" width="220" height="70" rx="6" fill="url(#baseGrad)" filter="url(#shadow)"/>
+      <rect x="40" y="396" width="200" height="4" rx="2" fill="#9b7040" opacity=".4"/>
+      <rect x="40" y="80" width="28" height="315" rx="4" fill="url(#woodGrad)" filter="url(#shadow)"/>
+      <rect x="212" y="80" width="28" height="315" rx="4" fill="url(#woodGrad)" filter="url(#shadow)"/>
+      <rect x="40" y="80" width="5" height="315" rx="2" fill="#a07030" opacity=".25"/>
+      <rect x="235" y="80" width="5" height="315" rx="2" fill="#a07030" opacity=".25"/>
+      <rect x="30" y="62" width="220" height="36" rx="6" fill="url(#woodGradV)" filter="url(#shadow)"/>
+      <rect x="132" y="20" width="16" height="50" rx="4" fill="#c49050"/>
+      <ellipse cx="140" cy="20" rx="18" ry="10" fill="#b8884a"/>
+      <ellipse cx="140" cy="20" rx="10" ry="6" fill="#c49a5a"/>
+      <ellipse cx="140" cy="80" rx="10" ry="7" fill="#a07030"/>
+      <ellipse cx="140" cy="80" rx="5" ry="4" fill="#8b5e20"/>
+      <line x1="140" y1="4" x2="140" y2="18" stroke="#3b7dd8" stroke-width="2.5" stroke-linecap="round"/>
+      <polygon points="140,20 136,12 144,12" fill="#3b7dd8"/>
+      <rect x="104" y="98" width="18" height="285" rx="4" fill="url(#steelGrad)" filter="url(#shadow)"/>
+      <rect x="158" y="98" width="18" height="285" rx="4" fill="url(#steelGrad)" filter="url(#shadow)"/>
+      <g class="press-block" id="pressBlock">
+        <rect x="78" y="225" width="124" height="30" rx="5" fill="url(#blockGrad)" filter="url(#shadow)"/>
+        <line x1="85" y1="231" x2="195" y2="231" stroke="#c09040" stroke-width=".8" opacity=".5"/>
+        <line x1="85" y1="237" x2="195" y2="237" stroke="#c09040" stroke-width=".8" opacity=".5"/>
+        <line x1="85" y1="243" x2="195" y2="243" stroke="#c09040" stroke-width=".8" opacity=".5"/>
+        <rect x="100" y="223" width="22" height="34" rx="4" fill="#9eb3c2" opacity=".6"/>
+        <rect x="158" y="223" width="22" height="34" rx="4" fill="#9eb3c2" opacity=".6"/>
+        <line x1="128" y1="210" x2="128" y2="222" stroke="#c0392b" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="128,225 124,216 132,216" fill="#c0392b"/>
+        <line x1="152" y1="210" x2="152" y2="222" stroke="#6c3fc5" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="152,225 148,216 156,216" fill="#6c3fc5"/>
+      </g>
+      <g class="bottle-squish" id="bottle">
+        <ellipse cx="140" cy="320" rx="30" ry="40" fill="url(#bottleGrad)" stroke="#5aaac8" stroke-width="1.5"/>
+        <ellipse cx="130" cy="300" rx="6" ry="12" fill="#fff" opacity=".35" transform="rotate(-10,130,300)"/>
+        <rect x="130" y="274" width="20" height="10" rx="3" fill="#4a8fa8"/>
+        <rect x="133" y="270" width="14" height="7" rx="3" fill="#3a7f98"/>
+        <text x="140" y="326" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="#2a6a88" opacity=".7">botella</text>
+      </g>
+      <line x1="105" y1="240" x2="93" y2="240" stroke="#8b5e2e" stroke-width="2" stroke-linecap="round"/>
+      <polygon points="91,240 100,236 100,244" fill="#8b5e2e"/>
+      <line x1="140" y1="392" x2="140" y2="378" stroke="#2d7a4a" stroke-width="2.5" stroke-linecap="round"/>
+      <polygon points="140,375 136,384 144,384" fill="#2d7a4a"/>
+    </svg>
+
+    <!-- ETIQUETAS -->
+    <div class="labels-container">
+      <div class="label lbl-blue" style="top:0%;left:-2%;animation-delay:.15s" onclick="showPanel('blue')">
+        <div class="label-box"><strong>F. aplicada</strong><br><span style="font-size:.55rem">(palanca)</span></div>
+        <div class="label-line">
+          <svg width="34" height="2"><line x1="0" y1="1" x2="34" y2="1" stroke="#3b7dd8" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+          <div class="label-dot"></div>
+        </div>
+      </div>
+      <div class="label lbl-brown" style="top:43%;left:-2%;animation-delay:.25s" onclick="showPanel('brown')">
+        <div class="label-box"><strong>Rozamiento</strong><br><span style="font-size:.55rem">(barras guía)</span></div>
+        <div class="label-line">
+          <svg width="26" height="2"><line x1="0" y1="1" x2="26" y2="1" stroke="#8b5e2e" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+          <div class="label-dot"></div>
+        </div>
+      </div>
+      <div class="label lbl-red" style="top:53%;left:-2%;animation-delay:.35s" onclick="showPanel('red')">
+        <div class="label-box"><strong>F. compresión</strong><br><span style="font-size:.55rem">(sobre botella)</span></div>
+        <div class="label-line">
+          <svg width="18" height="2"><line x1="0" y1="1" x2="18" y2="1" stroke="#c0392b" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+          <div class="label-dot"></div>
+        </div>
+      </div>
+      <div class="label lbl-purple" style="top:51%;right:-2%;flex-direction:row-reverse;animation-delay:.45s" onclick="showPanel('purple')">
+        <div class="label-line" style="flex-direction:row-reverse">
+          <svg width="18" height="2"><line x1="0" y1="1" x2="18" y2="1" stroke="#6c3fc5" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+          <div class="label-dot"></div>
+        </div>
+        <div class="label-box"><strong>Peso del bloque</strong><br><span style="font-size:.55rem">(deslizante)</span></div>
+      </div>
+      <div class="label lbl-gnorm" style="bottom:1%;right:-2%;flex-direction:row-reverse;animation-delay:.55s" onclick="showPanel('gnorm')">
+        <div class="label-line" style="flex-direction:row-reverse">
+          <svg width="26" height="2"><line x1="0" y1="1" x2="26" y2="1" stroke="#2d7a4a" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+          <div class="label-dot"></div>
+        </div>
+        <div class="label-box"><strong>F. normal</strong><br><span style="font-size:.55rem">(base)</span></div>
+      </div>
+      <div class="label lbl-orange" style="top:67%;left:50%;transform:translateX(-50%);flex-direction:column;align-items:center;animation-delay:.65s" onclick="showPanel('orange')">
+        <div class="label-box" style="text-align:center;"><strong>Ley de Hooke</strong><br><span style="font-size:.55rem">(botella) · F = k·x</span></div>
+        <svg width="2" height="13"><line x1="1" y1="0" x2="1" y2="13" stroke="#d4650a" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+        <div class="label-dot" style="background:#d4650a"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELES -->
+  <div class="panel-wrap">
+
+    <div class="panel panel-blue" id="panel-blue">
+      <div class="panel-title" style="color:var(--blue)">⬇️ Fuerza Aplicada</div>
+      <div class="panel-sub">Sobre la palanca · F = m × g</div>
+      <div class="prefill-note" id="note-blue">✅ Masa precargada desde Fase 1</div>
+      <div class="formula-chip chip-blue">F = m × g</div>
+      <p class="panel-desc">La fuerza que ejerces al empujar la palanca. Se calculó con la masa que registraste en el paso anterior.</p>
+      <div class="calc-row">
+        <div class="calc-field input-blue">
+          <label>Masa (kg)</label>
+          <input type="number" id="in-blue" placeholder="ej: 5" oninput="calc2('blue')"/>
+        </div>
+        <div class="calc-field input-blue">
+          <label>g (m/s²)</label>
+          <input type="number" id="g-blue" value="9.81" oninput="calc2('blue')"/>
+        </div>
+      </div>
+      <div class="result-line" id="res-blue"></div>
+    </div>
+
+    <div class="panel panel-brown" id="panel-brown">
+      <div class="panel-title" style="color:var(--brown)">↔️ Fuerza de Rozamiento</div>
+      <div class="panel-sub">En las barras guía</div>
+      <div class="formula-chip chip-brown">Fr = μ × N</div>
+      <p class="panel-desc">Fricción entre el bloque deslizante y las barras de acero. Depende del coeficiente μ y la fuerza normal.</p>
+      <div class="calc-row">
+        <div class="calc-field input-brown">
+          <label>μ (coef.)</label>
+          <input type="number" id="in-brown-mu" placeholder="ej: 0.3" step="0.01" oninput="calc2('brown')"/>
+        </div>
+        <div class="calc-field input-brown">
+          <label>N (newtons)</label>
+          <input type="number" id="in-brown-n" placeholder="ej: 50" oninput="calc2('brown')"/>
+        </div>
+      </div>
+      <div class="result-line" id="res-brown"></div>
+    </div>
+
+    <div class="panel panel-red" id="panel-red">
+      <div class="panel-title" style="color:var(--red)">🔴 Fuerza de Compresión</div>
+      <div class="panel-sub">Presión sobre la botella</div>
+      <div class="prefill-note" id="note-red">✅ Fuerza precargada desde Fase 1</div>
+      <div class="formula-chip chip-red">P = F / A</div>
+      <p class="panel-desc">Presión sobre la botella: fuerza aplicada dividida entre el área de contacto del bloque.</p>
+      <div class="calc-row">
+        <div class="calc-field input-red">
+          <label>Fuerza (N)</label>
+          <input type="number" id="in-red-f" placeholder="ej: 49" oninput="calc2('red')"/>
+        </div>
+        <div class="calc-field input-red">
+          <label>Área (m²)</label>
+          <input type="number" id="in-red-a" placeholder="ej: 0.004" step="0.001" oninput="calc2('red')"/>
+        </div>
+      </div>
+      <div class="result-line" id="res-red"></div>
+    </div>
+
+    <div class="panel panel-purple" id="panel-purple">
+      <div class="panel-title" style="color:var(--purple)">🟣 Peso del Bloque</div>
+      <div class="panel-sub">Fuerza gravitacional del bloque deslizante</div>
+      <div class="formula-chip chip-purple">W = m × g</div>
+      <p class="panel-desc">Peso propio del bloque que se suma a la fuerza aplicada para comprimir la botella.</p>
+      <div class="calc-row">
+        <div class="calc-field input-purple">
+          <label>Masa bloque (kg)</label>
+          <input type="number" id="in-purple" placeholder="ej: 2" oninput="calc2('purple')"/>
+        </div>
+        <div class="calc-field input-purple">
+          <label>g (m/s²)</label>
+          <input type="number" id="g-purple" value="9.81" oninput="calc2('purple')"/>
+        </div>
+      </div>
+      <div class="result-line" id="res-purple"></div>
+    </div>
+
+    <div class="panel panel-gnorm" id="panel-gnorm">
+      <div class="panel-title" style="color:var(--gnorm)">⬆️ Fuerza Normal</div>
+      <div class="panel-sub">Reacción de la base · 3ª Ley de Newton</div>
+      <div class="prefill-note" id="note-gnorm">✅ F. aplicada precargada desde Fase 1</div>
+      <div class="formula-chip chip-gnorm">N = F_total</div>
+      <p class="panel-desc">La base reacciona con una fuerza igual y opuesta a la suma de todas las fuerzas descendentes.</p>
+      <div class="calc-row">
+        <div class="calc-field input-gnorm">
+          <label>F. aplicada (N)</label>
+          <input type="number" id="in-gnorm-fa" placeholder="ej: 49" oninput="calc2('gnorm')"/>
+        </div>
+        <div class="calc-field input-gnorm">
+          <label>Peso bloque (N)</label>
+          <input type="number" id="in-gnorm-pb" placeholder="ej: 19.6" oninput="calc2('gnorm')"/>
+        </div>
+      </div>
+      <div class="result-line" id="res-gnorm"></div>
+    </div>
+
+    <div class="panel panel-orange" id="panel-orange">
+      <div class="panel-title" style="color:var(--orange)">🌀 Ley de Hooke</div>
+      <div class="panel-sub">Deformación elástica de la botella</div>
+      <div class="hooke-badge">🧲 F = k · x</div>
+      <div class="prefill-note" id="note-orange">✅ Fuerza precargada desde Fase 1</div>
+      <p class="panel-desc"><strong>k</strong> = constante de rigidez (N/m) · <strong>x</strong> = deformación (m). La botella se deforma proporcionalmente a la fuerza mientras esté en zona elástica.</p>
+      <div class="hooke-vis">
+        <div class="hooke-vis-label">
+          <span>Deformación visual</span>
+          <span id="deform-pct-label">0%</span>
+        </div>
+        <div class="spring-vis">
+          <span style="font-size:.65rem;color:#999">rígido</span>
+          <span class="spring-coil" id="springCoil">〰〰〰〰〰</span>
+          <span style="font-size:.65rem;color:#999">comprimido</span>
+        </div>
+        <div class="bottle-vis-wrap">
+          <svg id="bottleAnim" viewBox="0 0 44 70" width="40" style="transition:transform .4s ease;transform-origin:bottom center">
+            <defs><linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8e8f5"/><stop offset="100%" stop-color="#7ab8d0"/></linearGradient></defs>
+            <ellipse cx="22" cy="42" rx="16" ry="22" fill="url(#bg2)" stroke="#5aaac8" stroke-width="1.5"/>
+            <ellipse cx="16" cy="28" rx="3" ry="7" fill="#fff" opacity=".35" transform="rotate(-10,16,28)"/>
+            <rect x="13" y="16" width="18" height="8" rx="3" fill="#4a8fa8"/>
+            <rect x="15" y="12" width="14" height="6" rx="3" fill="#3a7f98"/>
+          </svg>
+          <div style="flex:1">
+            <div style="height:7px;background:#f0e0d0;border-radius:4px;overflow:hidden;margin-bottom:.35rem">
+              <div id="deformBar" style="height:100%;background:linear-gradient(90deg,#fde8d0,#d4650a);border-radius:4px;width:0%;transition:width .4s ease"></div>
+            </div>
+            <div style="font-size:.58rem;color:#b07840">← compresión →</div>
+          </div>
+        </div>
+      </div>
+      <div class="calc-row">
+        <div class="calc-field input-orange">
+          <label>k — rigidez (N/m)</label>
+          <input type="number" id="in-hooke-k" placeholder="ej: 800" oninput="calc2('orange')"/>
+        </div>
+        <div class="calc-field input-orange">
+          <label>x — deformación (m)</label>
+          <input type="number" id="in-hooke-x" placeholder="ej: 0.05" step="0.001" oninput="calc2('orange')"/>
+        </div>
+      </div>
+      <div class="result-line" id="res-orange"></div>
+      <div style="margin-top:.9rem;padding:.7rem;background:rgba(212,101,10,.07);border-radius:10px;font-size:.63rem;color:#7a3a08;line-height:1.6">
+        💡 <strong>Zona elástica:</strong> la botella recupera su forma.<br>
+        ⚠️ <strong>Zona plástica:</strong> deformación permanente — la botella queda aplastada.
+      </div>
+    </div>
+
+  </div><!-- /panel-wrap -->
+
+  <button class="back-btn" onclick="volverFase1()">← Volver a registrar masa</button>
+</div><!-- /fase2 -->
+
+<script>
+const G = 9.81;
+const COLORS2 = {blue:'#3b7dd8',brown:'#8b5e2e',red:'#c0392b',purple:'#6c3fc5',gnorm:'#2d7a4a',orange:'#d4650a'};
+let fuerzaCalculada = null;
+let currentPanel = null;
+
+/* ---- FASE 1 ---- */
+function fase1Calc(val){
+  const m = parseFloat(val);
+  const box = document.getElementById('f1-result');
+  const bridge = document.getElementById('bridge');
+
+  if(!isNaN(m) && val !== ''){
+    const f = (m * G).toFixed(2);
+    fuerzaCalculada = parseFloat(f);
+    box.classList.add('has-value');
+    box.innerHTML = `
+      <p class="f1-result-label">Esta es la fuerza aplicada 👇</p>
+      <div class="f1-result-value">${f}<span>N</span></div>
+      <p class="f1-result-formula" style="margin-top:.5rem">Conversión realizada usando:</p>
+      <p class="f1-result-formula"><strong>Fuerza = masa × gravedad</strong></p>`;
+    bridge.classList.add('visible');
+  } else {
+    fuerzaCalculada = null;
+    box.classList.remove('has-value');
+    box.innerHTML = `<p class="f1-result-empty"><span class="ico">⚡</span>Ingresa un valor para<br>calcular los newtons</p>`;
+    bridge.classList.remove('visible');
+  }
+}
+
+/* ---- TRANSICIÓN A FASE 2 ---- */
+function mostrarFase2(){
+  const f2 = document.getElementById('fase2');
+  const div = document.getElementById('secDivider');
+  f2.classList.add('visible');
+  div.classList.add('visible');
+
+  // Precarga campos con la fuerza calculada
+  if(fuerzaCalculada !== null){
+    const masa = parseFloat(document.getElementById('masa-input').value);
+
+    document.getElementById('in-blue').value = masa;
+    calc2('blue');
+    document.getElementById('note-blue').classList.add('show');
+
+    document.getElementById('in-red-f').value = fuerzaCalculada;
+    document.getElementById('note-red').classList.add('show');
+
+    document.getElementById('in-gnorm-fa').value = fuerzaCalculada;
+    document.getElementById('note-gnorm').classList.add('show');
+
+    document.getElementById('f-badge-display').textContent = `F aplicada: ${fuerzaCalculada} N`;
+  }
+
+  // scroll suave a fase2
+  setTimeout(()=>{
+    document.getElementById('fase2').scrollIntoView({behavior:'smooth', block:'start'});
+  }, 150);
+}
+
+function volverFase1(){
+  document.getElementById('fase2').classList.remove('visible');
+  document.getElementById('secDivider').classList.remove('visible');
+  document.getElementById('bridge').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+/* ---- FASE 2 PANELES ---- */
+function showPanel(color){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('visible'));
+  document.querySelectorAll('.label').forEach(l=>l.classList.remove('active'));
+
+  if(currentPanel === color){ currentPanel = null; return; }
+  currentPanel = color;
+
+  document.getElementById('panel-'+color).classList.add('visible');
+  document.querySelectorAll('.lbl-'+color).forEach(l=>l.classList.add('active'));
+
+  const svg = document.getElementById('pressSvg');
+  if(color==='red'||color==='purple'||color==='orange'){
+    svg.classList.add('pressing');
+  } else {
+    svg.classList.remove('pressing');
+  }
+
+  setTimeout(()=>{
+    document.getElementById('panel-'+color).scrollIntoView({behavior:'smooth',block:'nearest'});
+  }, 100);
+}
+
+function calc2(type){
+  const res = document.getElementById('res-'+type);
+  let val=null, unit='', explain='';
+
+  if(type==='blue'){
+    const m=parseFloat(document.getElementById('in-blue').value);
+    const g=parseFloat(document.getElementById('g-blue').value);
+    if(!isNaN(m)&&!isNaN(g)){val=(m*g).toFixed(2);unit='N';explain=`${m} kg × ${g} m/s²`;}
+  } else if(type==='brown'){
+    const mu=parseFloat(document.getElementById('in-brown-mu').value);
+    const n=parseFloat(document.getElementById('in-brown-n').value);
+    if(!isNaN(mu)&&!isNaN(n)){val=(mu*n).toFixed(2);unit='N';explain=`μ ${mu} × N ${n} N`;}
+  } else if(type==='red'){
+    const f=parseFloat(document.getElementById('in-red-f').value);
+    const a=parseFloat(document.getElementById('in-red-a').value);
+    if(!isNaN(f)&&!isNaN(a)&&a!==0){val=(f/a).toFixed(1);unit='Pa';explain=`${f} N ÷ ${a} m²`;}
+  } else if(type==='purple'){
+    const m=parseFloat(document.getElementById('in-purple').value);
+    const g=parseFloat(document.getElementById('g-purple').value);
+    if(!isNaN(m)&&!isNaN(g)){val=(m*g).toFixed(2);unit='N';explain=`${m} kg × ${g} m/s²`;}
+  } else if(type==='gnorm'){
+    const fa=parseFloat(document.getElementById('in-gnorm-fa').value)||0;
+    const pb=parseFloat(document.getElementById('in-gnorm-pb').value)||0;
+    if(fa||pb){val=(fa+pb).toFixed(2);unit='N';explain=`F_apl ${fa} N + W_bloque ${pb} N`;}
+  } else if(type==='orange'){
+    const k=parseFloat(document.getElementById('in-hooke-k').value);
+    const x=parseFloat(document.getElementById('in-hooke-x').value);
+    if(!isNaN(k)&&!isNaN(x)){
+      val=(k*x).toFixed(2);unit='N';explain=`k=${k} N/m × x=${x} m`;
+      const pct=Math.min(100,Math.abs(x)*800);
+      const sy=Math.max(0.45,1-Math.abs(x)*4);
+      document.getElementById('deformBar').style.width=pct+'%';
+      document.getElementById('deform-pct-label').textContent=Math.round(pct)+'%';
+      document.getElementById('bottleAnim').style.transform=`scaleY(${sy.toFixed(2)})`;
+      document.getElementById('springCoil').style.letterSpacing=Math.max(-4,0.05-x*0.8)+'em';
+    }
+  }
+
+  if(val!==null){
+    res.innerHTML=`<div class="result-num" style="color:${COLORS2[type]}">${val} <span style="font-size:.95rem">${unit}</span></div><div class="result-explain">${explain}</div>`;
+  } else {
+    res.innerHTML='';
+  }
+}
+</script>
+</body>
+</html>
